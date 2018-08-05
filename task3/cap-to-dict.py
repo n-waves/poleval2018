@@ -10,7 +10,7 @@ from tqdm import tqdm
 from collections import Counter
 from sys import stderr
 from functools import reduce
-
+from pickle import load
 
 def count_tokens(sentences):
   return Counter(token for sentence in sentences for token in sentence.split())
@@ -21,24 +21,20 @@ def escape_unknowns(sentences, vocabulary, unk_mark):
   return [escape(sentence)+'\n' for sentence in sentences]
 
 
-def limit_dict(sentence_file, output_path, min_freq=3, threads=8, unk_marker="☠"):
+def cap_to_dict(sentence_file, dictionary_file, output, lower_case=False, min_freq=3, unk_marker="☠"):
   with open(sentence_file, 'r') as f:
     lines = f.readlines()
-  print(f"Read {len(lines)} lines", file=stderr)
-  tasks = partition_by_cores(lines)
-  with Pool(threads) as e:
-    counters = e.map(count_tokens, tasks)
-    tokens = reduce(lambda a, b: a + b, counters)
+  print(f"Cap-to-dict on file with {len(lines)} lines", file=stderr)
+  with open(dictionary_file, 'rb') as f:
+    tokens = load(f)
 
-  vocabulary = set(token for token, freq in tokens.most_common() if freq >= min_freq)
-  path = Path(output_path)
-  with open(path / 'vocabulary.txt', 'w') as f:
-    f.writelines([v + '\n' for v in vocabulary])
-
-  print(f"Created dictionary with {len(vocabulary)} tokens", file=stderr)
-  with Pool(threads) as e:
-    lines = sum(e.map(escape_unknowns, tasks, [vocabulary]*len(tasks), [unk_marker] * len(tasks)), [])
-  with open(path / 'escaped.txt', 'w') as f:
+  vocabulary = set((token.lower() if lower_case else token) for token, freq in tokens.most_common() if freq >= min_freq)
+  if lower_case:
+    vocabulary.add('<up>')
+  print(f"Dictionary was shrinked to {len(vocabulary)} tokens", file=stderr)
+  lines = escape_unknowns(lines, vocabulary, unk_marker)
+  output = Path(output)
+  with open(output, 'w') as f:
     f.writelines(lines)
 
-if __name__ == '__main__': fire.Fire(limit_dict)
+if __name__ == '__main__': fire.Fire(cap_to_dict)

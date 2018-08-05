@@ -1,13 +1,24 @@
-TASK3_DATA_DIR="data/task3/train"
+#!/usr/bin/env bash
+set -e
+
+TASK3_DATA_DIR="../data/task3/train"
 SENTENCE_FILE="${TASK3_DATA_DIR}/task3_train_segmented.txt"
-TEMP_DIR="tmp"
-OUTPUT_DIR="tmp"
-SENTENCEPIECE_MODEL_NAME="sp-100k"
+TEMP_DIR="../work/up_low/tmp"
+OUTPUT_DIR="../work/up_low/tmp"
+SENTENCEPIECE_MODEL_NAME="${OUTPUT_DIR}/sp-100k"
+DICTIONARY_FILE="${TEMP_DIR}/word_freq.pkl"
 
 # sort sentences and remove duplicates
 mkdir -p "${TEMP_DIR}"
 UNIQ_SENTENCE_FILE="${TEMP_DIR}/task3_train_uniq.txt"
-sort "${SENTENCE_FILE}" | uniq > "${UNIQ_SENTENCE_FILE}"
+if [ ! -f "${UNIQ_SENTENCE_FILE}" ] ; then
+    sort "${SENTENCE_FILE}" | uniq > "${UNIQ_SENTENCE_FILE}"
+fi
+# creates "${DICTIONARY_FILE}"
+python ./extract-dict.py --sentence-file "${SENTENCE_FILE}" --output "${DICTIONARY_FILE}"
+
+# creates "${TEMP_DIR}/escaped.txt"
+python ./cap-to-dict.py --sentence-file "${UNIQ_SENTENCE_FILE}" --dictionary-file "${DICTIONARY_FILE}" --output "${TEMP_DIR}/escaped.txt"
 
 # train sentencepiece model
 if [ ! -f "${SENTENCEPIECE_MODEL_NAME}.model" ]; then
@@ -22,17 +33,15 @@ else
   echo "Setencepiece model '${SENTENCEPIECE_MODEL_NAME}.model' already exists."
 fi
 
-# creates "${TEMP_DIR}/escaped.txt" and "${TEMP_DIR}/vacabulary.txt"
-python ./limit-dict.py --sentence-file "${UNIQ_SENTENCE_FILE}" --output-path "${TEMP_DIR}" --threads 1
-
 # running spm_encode in parallel
 SPM_PROCESSES=8
 PARTS_DIR="${TEMP_DIR}/parts"
 IDS_FILE="${TEMP_DIR}/ids.txt"
-mkdir "${PARTS_DIR}"
-rm -r "${PARTS_DIR}"/sentence_part-*
+mkdir -p "${PARTS_DIR}"
+rm -fr "${PARTS_DIR}"/sentence_part-*
 split -n "l/${SPM_PROCESSES}" "${TEMP_DIR}/escaped.txt" "${PARTS_DIR}/sentence_part-"
-ls "${PARTS_DIR}"/sentence_part-*" | xargs '-I{}' -P "${SPM_PROCESSES}" -n 1 spm_encode --model="${SENTENCEPIECE_MODEL_NAME}.model" --extra_options=bos:eos --output_format=id '--output={}.ids' '{}'
+
+ls "${PARTS_DIR}"/sentence_part-* | xargs '-I{}' -P "${SPM_PROCESSES}" -n 1 spm_encode --model="${SENTENCEPIECE_MODEL_NAME}.model" --extra_options=bos:eos --output_format=id '--output={}.ids' '{}'
 cat "${PARTS_DIR}"/sentence_part-*.ids > "${IDS_FILE}"
 
 # creates "${OUTPUT_DIR}/val_ids.npy" and "${OUTPUT_DIR}/trn_ids.npy"

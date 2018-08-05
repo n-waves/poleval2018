@@ -18,10 +18,10 @@ def split_to_numpy(ids_file, output_path, valid_size=10000000):
   
   train = 0
   train_idx = valid_idx
-#  while train < 123000000:
-#    train += len(ids[train_idx])
-#    train_idx += 1
-  train_idx = len(ids)
+  while train < 123000000:
+    train += len(ids[train_idx])
+    train_idx += 1
+#  train_idx = len(ids)
 
   output_path = Path(output_path)
   output_path.mkdir(parents=True, exist_ok=True)
