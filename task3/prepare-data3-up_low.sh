@@ -15,10 +15,10 @@ if [ ! -f "${UNIQ_SENTENCE_FILE}" ] ; then
     sort "${SENTENCE_FILE}" | uniq > "${UNIQ_SENTENCE_FILE}"
 fi
 # creates "${DICTIONARY_FILE}"
-python ./extract-dict.py --sentence-file "${SENTENCE_FILE}" --output "${DICTIONARY_FILE}"
+[ -f "${DICTIONARY_FILE}" ] || python ./extract-dict.py --sentence-file "${SENTENCE_FILE}" --output "${DICTIONARY_FILE}"
 
 # creates "${TEMP_DIR}/escaped.txt"
-python ./cap-to-dict.py --sentence-file "${UNIQ_SENTENCE_FILE}" --dictionary-file "${DICTIONARY_FILE}" --output "${TEMP_DIR}/escaped.txt"
+[ -f "${TEMP_DIR}/escaped.txt" ] || python ./cap-to-dict.py --sentence-file "${UNIQ_SENTENCE_FILE}" --dictionary-file "${DICTIONARY_FILE}" --output "${TEMP_DIR}/escaped.txt"
 
 # train sentencepiece model
 if [ ! -f "${SENTENCEPIECE_MODEL_NAME}.model" ]; then
@@ -37,12 +37,36 @@ fi
 SPM_PROCESSES=8
 PARTS_DIR="${TEMP_DIR}/parts"
 IDS_FILE="${TEMP_DIR}/ids.txt"
-mkdir -p "${PARTS_DIR}"
-rm -fr "${PARTS_DIR}"/sentence_part-*
-split -n "l/${SPM_PROCESSES}" "${TEMP_DIR}/escaped.txt" "${PARTS_DIR}/sentence_part-"
 
-ls "${PARTS_DIR}"/sentence_part-* | xargs '-I{}' -P "${SPM_PROCESSES}" -n 1 spm_encode --model="${SENTENCEPIECE_MODEL_NAME}.model" --extra_options=bos:eos --output_format=id '--output={}.ids' '{}'
-cat "${PARTS_DIR}"/sentence_part-*.ids > "${IDS_FILE}"
+if [ ! -f ${IDS_FILE} ]; then
+    mkdir -p "${PARTS_DIR}"
+    rm -fr "${PARTS_DIR}"/sentence_part-*
+    split -n "l/${SPM_PROCESSES}" "${TEMP_DIR}/escaped.txt" "${PARTS_DIR}/sentence_part-"
 
-# creates "${OUTPUT_DIR}/val_ids.npy" and "${OUTPUT_DIR}/trn_ids.npy"
-python ./split-datasets.py --ids-file "${IDS_FILE}" --output-path "${OUTPUT_DIR}"
+    ls "${PARTS_DIR}"/sentence_part-* | xargs '-I{}' -P "${SPM_PROCESSES}" -n 1 spm_encode --model="${SENTENCEPIECE_MODEL_NAME}.model" --extra_options=bos:eos --output_format=id '--output={}.ids' '{}'
+    cat "${PARTS_DIR}"/sentence_part-*.ids > "${IDS_FILE}"
+fi
+if [ ! -f "${OUTPUT_DIR}/val_ids.npy" ] || [ ! -f "${OUTPUT_DIR}/trn_ids.npy" ]; then
+    # creates "${OUTPUT_DIR}/val_ids.npy" and "${OUTPUT_DIR}/trn_ids.npy"
+    python ./split-datasets.py --ids-file "${IDS_FILE}" --output-path "${OUTPUT_DIR}"
+fi
+
+
+TEST_FILE="../data/task3/test/task3_test_segmented.txt"
+TEST_IDS_FILE="${TEMP_DIR}/test_ids.txt"
+# creates ${LOWERCASE_TEST_FILE}
+
+# creates "${TEMP_DIR}/escaped_test.txt"
+[ -f "${TEMP_DIR}/escaped_test.txt" ] || python ./cap-to-dict.py --sentence-file "${TEST_FILE}" --lower-case=True --dictionary-file "${DICTIONARY_FILE}" --output "${TEMP_DIR}/escaped_test.txt"
+
+if [ ! -f ${TEST_IDS_FILE} ]; then
+    mkdir -p "${PARTS_DIR}"
+    rm -fr "${PARTS_DIR}"/sentence_part-*
+    split -n "l/${SPM_PROCESSES}" "${TEMP_DIR}/escaped_test.txt" "${PARTS_DIR}/sentence_part-"
+    ls "${PARTS_DIR}"/sentence_part-* | xargs '-I{}' -P "${SPM_PROCESSES}" -n 1 spm_encode --model="${SENTENCEPIECE_MODEL_NAME}.model" --extra_options=bos:eos --output_format=id '--output={}.ids' '{}'
+    cat "${PARTS_DIR}"/sentence_part-*.ids > "${TEST_IDS_FILE}"
+fi
+
+if [ ! -f "${OUTPUT_DIR}/test_ids.npy" ]; then
+    python ./split-datasets.py --ids-file "${TEST_IDS_FILE}" --output-path "${OUTPUT_DIR}" --test-set=True
+fi
