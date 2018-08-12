@@ -3,9 +3,9 @@ set -e
 
 TASK3_DATA_DIR="../data/task3/train"
 SENTENCE_FILE="${TASK3_DATA_DIR}/task3_train_segmented.txt"
-TEMP_DIR="../work/just_low/tmp"
-OUTPUT_DIR="../work/just_low/tmp"
-SENTENCEPIECE_MODEL_NAME="${OUTPUT_DIR}/sp-100k"
+TEMP_DIR="../work/just_low30k/tmp"
+OUTPUT_DIR="../work/just_low30k/tmp"
+SENTENCEPIECE_MODEL_NAME="${OUTPUT_DIR}/sp-30k"
 DICTIONARY_FILE="${TEMP_DIR}/word_freq.pkl"
 
 # sort sentences and remove duplicates
@@ -30,7 +30,7 @@ LOWERCASE_SENTENCE_FILE="${TEMP_DIR}/task3_train_lowercase.txt"
 # train sentencepiece model
 if [ ! -f "${SENTENCEPIECE_MODEL_NAME}.model" ]; then
   spm_train --input="${LOWERCASE_SENTENCE_FILE}" --model_prefix="${SENTENCEPIECE_MODEL_NAME}"\
-            --vocab_size=100000\
+            --vocab_size=30000\
             --unk_id=0 --pad_id=1 --bos_id=2 --eos_id=3\
             --input_sentence_size=30000000\
             --model_type=unigram\
