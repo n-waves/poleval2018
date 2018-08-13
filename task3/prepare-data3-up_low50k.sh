@@ -3,9 +3,9 @@ set -e
 
 TASK3_DATA_DIR="../data/task3/train"
 SENTENCE_FILE="${TASK3_DATA_DIR}/task3_train_segmented.txt"
-TEMP_DIR="../work/up_low/tmp"
-OUTPUT_DIR="../work/up_low/tmp"
-SENTENCEPIECE_MODEL_NAME="${OUTPUT_DIR}/sp-100k"
+TEMP_DIR="../work/up_low50k/tmp"
+OUTPUT_DIR="../work/up_low50k/tmp"
+SENTENCEPIECE_MODEL_NAME="${OUTPUT_DIR}/sp-50k"
 DICTIONARY_FILE="${TEMP_DIR}/word_freq.pkl"
 
 # sort sentences and remove duplicates
@@ -28,7 +28,7 @@ if [ ! -f "${SENTENCEPIECE_MODEL_NAME}.model" ]; then
     n|N ) echo "Exiting";exit 1;;
     * ) echo "Invalid answer";exit 1;;
   esac
-  spm_train --input="${UNIQ_SENTENCE_FILE}" --model_prefix="${SENTENCEPIECE_MODEL_NAME}" --vocab_size=100000 --unk_id=0 --pad_id=1 --bos_id=2 --eos_id=3 --input_sentence_size=30000000 --model_type=unigram
+  spm_train --input="${UNIQ_SENTENCE_FILE}" --model_prefix="${SENTENCEPIECE_MODEL_NAME}" --vocab_size=50000 --unk_id=0 --pad_id=1 --bos_id=2 --eos_id=3 --input_sentence_size=30000000 --model_type=unigram
 else
   echo "Setencepiece model '${SENTENCEPIECE_MODEL_NAME}.model' already exists."
 fi
