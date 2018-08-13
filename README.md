@@ -35,24 +35,25 @@ Then to train a model run
 ```
 cd task3/
 ./prepare-data3-up_low.sh
+./prepare-data3-up_low50k.sh
 cd ..
 
 # to initially train the model
 python fastai_scripts/pretrain_lm.py --dir-path ./work/up_low --cuda-id 0 --cl 10 --bs 192 --lr 0.01\
-   --pretrain-id "v100k" --sentence-piece-model sp-100k.model
+   --pretrain-id "v100k" --sentence-piece-model sp-100k.model --nl 4
 
 # to check the perplexity
 python fastai_scripts/infer.py --dir-path ./work/up_low --cuda-id 0 --bs 22 --pretrain-id "v100k"\
-   --sentence-piece-model sp-100k.model --test_set tmp/val_ids.npy --correct_for_up=False
+   --sentence-piece-model sp-100k.model --test_set tmp/val_ids.npy --correct_for_up=False --nl 4
    
 # to fine tune with smaller dropout
 python ./fastai_scripts/finetune_lm.py --dir-path work/up_low \
     --pretrain-path work/up_low --cuda-id 0 --cl 6 --pretrain-id "v100k" --lm-id "v100k_finetune"\
-    --bs 192 --lr 0.001 --use_discriminative False --dropmult 0.5 --sentence-piece-model sp-100k.model --sampled True 
+    --bs 192 --lr 0.001 --use_discriminative False --dropmult 0.5 --sentence-piece-model sp-100k.model --sampled True --nl 4 
 
 # to check the perplexity on the valuation data set
 python fastai_scripts/infer.py --dir-path ./work/up_low --cuda-id 0 --bs 22 --pretrain-id "v100k_finetune_lm"\
-   --sentence-piece-model sp-100k.model --test_set tmp/val_ids.npy --correct_for_up=False
+   --sentence-piece-model sp-100k.model --test_set tmp/val_ids.npy --correct_for_up=False --nl 4
 
 ```
 
@@ -60,5 +61,5 @@ To check the perplexity on test set run:
 ```
 # it expects your model in `work/up_low/models` and sentence piece model in `work/up_low/tmp` 
 python fastai_scripts/infer.py --dir-path ./work/up_low --cuda-id 0 --bs 22 --pretrain-id "v100k_finetune_lm"\
-   --sentence-piece-model sp-100k.model --test_set tmp/test_ids.npy --correct_for_up=False      
+   --sentence-piece-model sp-100k.model --test_set tmp/test_ids.npy --correct_for_up=False --nl 4      
 ```
