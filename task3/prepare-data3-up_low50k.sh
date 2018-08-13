@@ -28,7 +28,7 @@ if [ ! -f "${SENTENCEPIECE_MODEL_NAME}.model" ]; then
     n|N ) echo "Exiting";exit 1;;
     * ) echo "Invalid answer";exit 1;;
   esac
-  spm_train --input="${UNIQ_SENTENCE_FILE}" --model_prefix="${SENTENCEPIECE_MODEL_NAME}" --vocab_size=50000 --unk_id=0 --pad_id=1 --bos_id=2 --eos_id=3 --input_sentence_size=30000000 --model_type=unigram
+  spm_train --input="${UNIQ_SENTENCE_FILE}" --model_prefix="${SENTENCEPIECE_MODEL_NAME}" --character_coverage 1.0 --vocab_size=50000 --unk_id=0 --pad_id=1 --bos_id=2 --eos_id=3 --input_sentence_size=30000000 --model_type=unigram
 else
   echo "Setencepiece model '${SENTENCEPIECE_MODEL_NAME}.model' already exists."
 fi

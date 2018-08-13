@@ -33,6 +33,7 @@ ESCAPED_SENTENCE_FILE="${TEMP_DIR}/task3_train_escaped.txt"
 if [ ! -f "${SENTENCEPIECE_MODEL_NAME}.model" ]; then
   spm_train --input="${LOWERCASE_SENTENCE_FILE}" --model_prefix="${SENTENCEPIECE_MODEL_NAME}"\
             --vocab_size=30000\
+            --character_coverage 1.0\
             --unk_id=0 --pad_id=1 --bos_id=2 --eos_id=3\
             --input_sentence_size=30000000\
             --model_type=unigram\
@@ -52,7 +53,7 @@ if [ ! -f ${IDS_FILE} ]; then
     mkdir -p "${PARTS_DIR}"
     rm -fr "${PARTS_DIR}"/sentence_part-*
     split -n "l/${SPM_PROCESSES}" "${LOWERCASE_SENTENCE_FILE}" "${PARTS_DIR}/sentence_part-"
-    ls "${PARTS_DIR}"/sentence_part-* | xargs '-I{}' -P "${SPM_PROCESSES}" -n 1 spm_encode --model="${SENTENCEPIECE_MODEL_NAME}.model" --extra_options=bos:eos --output_format=id '--output={}.ids' '{}'
+    ls "${PARTS_DIR}"/sentence_part-* | xargs '-I{}' -P "${SPM_PROCESSES}" -n 1 spm_encode  --model="${SENTENCEPIECE_MODEL_NAME}.model" --extra_options=bos:eos --output_format=id '--output={}.ids' '{}'
     cat "${PARTS_DIR}"/sentence_part-*.ids > "${IDS_FILE}"
 fi
 
