@@ -11,6 +11,14 @@ from collections import Counter
 from sys import stderr
 from functools import reduce
 from pickle import load
+import regex as re
+
+dec = re.compile("[\p{Lu}][^\p{Lu}]*")
+
+def decapitalize(s):
+  if dec.fullmatch(s):
+    return s[0].lower() + s[1:]
+  return s
 
 def count_tokens(sentences):
   return Counter(token for sentence in sentences for token in sentence.split())
@@ -21,14 +29,18 @@ def escape_unknowns(sentences, vocabulary, unk_mark):
   return [escape(sentence)+'\n' for sentence in sentences]
 
 
-def cap_to_dict(sentence_file, dictionary_file, output, lower_case=False, min_freq=3, unk_marker="☠"):
+def cap_to_dict(sentence_file, dictionary_file, output, lower_case=False, most_low=False, min_freq=3, unk_marker="☠"):
   with open(sentence_file, 'r') as f:
     lines = f.readlines()
   print(f"Cap-to-dict on file with {len(lines)} lines", file=stderr)
   with open(dictionary_file, 'rb') as f:
     tokens = load(f)
 
-  vocabulary = set((token.lower() if lower_case else token) for token, freq in tokens.most_common() if freq >= min_freq)
+  if lower_case != most_low:
+    print("lower_case != most_low is not supported", file=stderr)
+    exit(1)
+
+  vocabulary = set((decapitalize(token) if most_low else token) for token, freq in tokens.most_common() if freq >= min_freq)
   if lower_case:
     vocabulary.add('<up>')
   print(f"Dictionary was shrinked to {len(vocabulary)} tokens", file=stderr)
