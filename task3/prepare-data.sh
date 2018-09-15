@@ -5,7 +5,7 @@ source utils.sh
 
 LOWER_CASE="False"
 MOST_LOW="False"
-
+UNIQ="True"
 while [[ $# -gt 0 ]]
 do
     case "$1" in
@@ -46,6 +46,12 @@ do
             shift
             force_bool '--most-low' "${MOST_LOW}"
             ;;
+        --uniq)
+            UNIQ="$2"
+            shift
+            shift
+            force_bool '--unique' "${UNIQ}"
+            ;;
         *)
             die "Unknown argument: '$1'"
             ;;
@@ -84,6 +90,9 @@ if [ "${LOWER_CASE}" = "True" ]; then
 
     [ -f "${LOWERCASE_SENTENCE_FILE}" ] || ./escape-caps.sh --sentence-file "${UNIQ_SENTENCE_FILE}" --output "${LOWERCASE_SENTENCE_FILE}" --most-low "${MOST_LOW}"
     INPUT_SENTENCE_FILE="${LOWERCASE_SENTENCE_FILE}"
+elif [ "${UNIQ}" = "False" ]; then
+    INPUT_SENTENCE_FILE="${SENTENCE_FILE}"
+    ESCAPED_SENTENCE_FILE="${CACHE_DIR}/escaped_nouniq.txt"
 else
     INPUT_SENTENCE_FILE="${UNIQ_SENTENCE_FILE}"
     ESCAPED_SENTENCE_FILE="${CACHE_DIR}/escaped.txt"
