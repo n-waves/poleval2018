@@ -6,6 +6,8 @@ We extended it with google sentence piece to tokenize polish words.
 [Slides from our presentation on AI & NLP Day in Warsaw](
 https://www.icloud.com/keynote/0Ku6DiwFgvbPsIUqtb_CLxd5g#poleval2018-AI_&_NLP_Day_Warsaw_2018_Published)
 
+[Weights and sentence piece model](https://go.n-waves.com/poleval2018-modelv1)
+
 
 ## Installation
 The source code needs cleaning up to minimise the amount of work needed to run it.
